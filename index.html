@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PHP-AJAX-UPLOAD-IMG</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+    <script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+    <!-- 最新版本的 Bootstrap 核心 CSS 文件 -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap.min.css"
+          integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+
+    <!-- 可选的 Bootstrap 主题文件（一般不用引入） -->
+    <link rel="stylesheet" href="https://cdn.bootcss.com/bootstrap/3.3.7/css/bootstrap-theme.min.css"
+          integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+
+    <!-- 最新的 Bootstrap 核心 JavaScript 文件 -->
+    <script src="https://cdn.bootcss.com/bootstrap/3.3.7/js/bootstrap.min.js"
+            integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+            crossorigin="anonymous"></script>
+    <style>
+        p {
+            word-wrap: break-word;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="form-group">
+                <label>选择图片</label>
+                <input class="form-control" type="file" id="imgId">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="tabbable" id="tabs-868298">
+                <ul class="nav nav-tabs">
+                    <li>
+                        <a href="#panel-615631" data-toggle="tab">预览图片信息</a>
+                    </li>
+                    <li class="active">
+                        <a href="#panel-864128" data-toggle="tab">开始上传图片</a>
+                    </li>
+                </ul>
+                <div class="tab-content">
+                    <div class="tab-pane" id="panel-615631">
+                        <button type="button" id="preview" class="btn btn-info">预览图片信息</button>
+                        <p class="navbar-text" style="width:600px;" id="result"></p>
+                    </div>
+                    <div class="tab-pane active" id="panel-864128">
+                        <button type="button" id="submit" class="btn btn-success">开始上传图片</button>
+                        <p class="navbar-text" style="width:600px;" id="ajax_result"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<script>
+    $(function () {
+        var maxSize = 1 * 1024 * 1024;//最大只允许1m大小
+        //预览信息
+        $("#preview").click(function () {
+            $("#result").empty();
+            var file = $("#imgId")[0].files[0];
+            var fileObj = checkFile(file);
+            var reader = new FileReader();
+            reader.onload = function () {
+                var base64 = reader.result;
+                var img = "<img src='" + base64 + "'/>";
+                $("#result").append(img);
+                $("#result").append(base64);
+            };
+            reader.readAsDataURL(fileObj);
+
+        });
+        //请求
+        $("#submit").click(function () {
+            var file = $("#imgId")[0].files[0];
+            var fileObj = checkFile(file);
+            var reader = new FileReader();
+            reader.readAsDataURL(fileObj);
+            reader.onload = function () {
+                var base64 = reader.result;
+                $.post('action.php?act=upload', {base64: base64}, function (rev) {
+                    console.log(rev);
+                    $("#ajax_result").append(JSON.stringify(rev));
+                    if (rev.status === 0) {
+                        var a = "<a target='_blank' href='" + rev.data + "'>点击查看图片</a>";
+                        var img = "<img src='" + rev.data + "' alt=''/>";
+                        $("#ajax_result").append('<hr/>');
+                        $("#ajax_result").append(a);
+                        $("#ajax_result").append('<hr/>');
+                        $("#ajax_result").append(img);
+                    }
+                }, 'json');
+            };
+
+        });
+
+        /**
+         * 对图片做判断
+         * @param file
+         * @returns {*}
+         */
+        function checkFile(file) {
+            if (typeof file === 'undefined') {
+                alert("请选择图片");
+                return false;
+            }
+            console.log(file);
+            //判断大小
+            var size = file.size;
+            var sizeM = size / (1024 * 1024);
+            var sizeInfo = "图片实际大小: " + sizeM.toFixed(2) + "M<br/>";
+            $("#result").append(sizeInfo);
+            if (size > maxSize) {
+                alert("您上传的图片太大,请控制在" + maxSize / (1024 * 1024) + 'M');
+                return false;
+            }
+            return file;
+        }
+    });
+</script>
+</body>
+</html>
